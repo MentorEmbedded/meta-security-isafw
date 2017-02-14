@@ -54,8 +54,8 @@ python do_analysesource() {
             licenses.remove('|')
         while '&' in licenses:
             licenses.remove('&')
-        for l in licenses:
-            recipe.licenses.append(p + ":" + canonical_license(d, l))
+        #for l in licenses:
+         #   recipe.licenses.append(p + ":" + canonical_license(d, l))
 
     aliases = d.getVar('DISTRO_PN_ALIAS', True)
     if aliases:
@@ -93,9 +93,9 @@ python process_reports_handler() {
     from isafw import isafw
 
     savedenv = os.environ.copy()
-    os.environ["PATH"] = d.getVar("PATH", True)
+    os.environ["PATH"] = e.data.getVar("PATH", True)
 
-    imageSecurityAnalyser = isafw_init(isafw, d)
+    imageSecurityAnalyser = isafw_init(isafw, e.data)
 
     bb.debug(1, 'isafw: process reports')
     imageSecurityAnalyser.process_report()

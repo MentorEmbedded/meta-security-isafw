@@ -46,12 +46,14 @@ class ISA_CVEChecker:
         self.report_name = ISA_config.reportdir + "/cve_report_" + \
             ISA_config.machine + "_" + ISA_config.timestamp
         output = ""
+ 
         # check that cve-check-tool is installed
         try:
             popen = subprocess.Popen(
                 "which cve-check-tool", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             popen.wait()
             output = popen.stdout.read()
+            
         except:
             with open(self.logfile, 'a') as flog:
                 flog.write("error executing which cve-check-tool\n")
@@ -59,12 +61,13 @@ class ISA_CVEChecker:
             if output:
                 self.initialized = True
                 with open(self.logfile, 'a') as flog:
-                    flog.write("\nPlugin ISA_CVEChecker initialized!\n")
+                    flog.write("\nPlugin ISA_CVEChecker initialized!\n")                    
             else:
+                self.initialized = True
                 with open(self.logfile, 'a') as flog:
-                    flog.write("cve-check-tool is missing!\n")
-                    flog.write(
-                        "Please install it from https://github.com/ikeydoherty/cve-check-tool.\n")
+                    flog.write("\n Failed: output value is " + output )
+                    flog.write("\ncve-check-tool is missing!\n")
+                    flog.write("Please install it from https://github.com/ikeydoherty/cve-check-tool.\n")
 
     def process_package(self, ISA_pkg):
         if (self.initialized):
@@ -159,7 +162,14 @@ class ISA_CVEChecker:
         # now faux file is ready and we can process it
         args = ""
         result = ""
+        output = ""
         tool_stderr_value = ""
+        p = subprocess.Popen(
+                "echo $PATH", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        output = p.stdout.read()
+        with open(self.logfile, 'a') as flog:
+            flog.write("Path defined for executable =  " + output)
         if self.proxy:
             args += "https_proxy=%s http_proxy=%s " % (self.proxy, self.proxy)
         args += "cve-check-tool "

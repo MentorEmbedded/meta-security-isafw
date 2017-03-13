@@ -33,7 +33,6 @@ python do_analysesource() {
     from isafw import isafw
 
     imageSecurityAnalyser = isafw_init(isafw, d)
-
     if not d.getVar('SRC_URI', True):
         # Recipe didn't fetch any sources, nothing to do here I assume?
         return
@@ -94,7 +93,7 @@ python process_reports_handler() {
 
     savedenv = os.environ.copy()
     os.environ["PATH"] = e.data.getVar("PATH", True)
-
+    os.environ["PATH"] = e.data.getVar("STAGING_DIR_NATIVE" , True) + "/usr/bin:" + os.environ["PATH"]
     imageSecurityAnalyser = isafw_init(isafw, e.data)
 
     bb.debug(1, 'isafw: process reports')
@@ -226,7 +225,8 @@ def isafw_init(isafw, d):
         isafw_config.la_plugin_image_whitelist = re.split(r'[,\s]*', la_image_whitelist)
     if la_image_blacklist:
         isafw_config.la_plugin_image_blacklist = re.split(r'[,\s]*', la_image_blacklist)
-
+    isafw_config.name = d.getVar('BPN', True) 
+    
     return isafw.ISA(isafw_config)
 
 # based on toaster.bbclass _toaster_load_pkgdatafile function

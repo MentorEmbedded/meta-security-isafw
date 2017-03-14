@@ -115,7 +115,7 @@ class ISA_config:
     la_plugin_image_blacklist = ""# blacklist of images for violating license checks
     arch = ""                     # target architecture
     name = "" 
-    
+    tmp_dir = ""
 
 class ISA:
     def call_plugins(self, methodname, *parameters, **keywords):

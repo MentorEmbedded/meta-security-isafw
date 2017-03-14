@@ -45,8 +45,9 @@ class ISA_CVEChecker:
         self.logfile = ISA_config.logdir + "/isafw_cvelog"
         self.report_name = ISA_config.reportdir + "/cve_report_" + \
             ISA_config.machine + "_" + ISA_config.timestamp
+        self.tmp_dir = ISA_config.tmp_dir
         output = ""
- 
+        
         # check that cve-check-tool is installed
         try:
             popen = subprocess.Popen(
@@ -163,13 +164,11 @@ class ISA_CVEChecker:
         args = ""
         result = ""
         output = ""
+        faux_directory = ""
+        set_linux_kernel_name_arg = "" 
         tool_stderr_value = ""
-        p = subprocess.Popen(
-                "echo $PATH", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
-        output = p.stdout.read()
-        with open(self.logfile, 'a') as flog:
-            flog.write("Path defined for executable =  " + output)
+        script_directory = ""
+        kernel_versions_file_path = ""
         if self.proxy:
             args += "https_proxy=%s http_proxy=%s " % (self.proxy, self.proxy)
         args += "cve-check-tool "
@@ -183,6 +182,15 @@ class ISA_CVEChecker:
         with open(self.logfile, 'a') as flog:
             flog.write("Args: " + args)
         try:
+            script_directory = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/set_linux_name.sh "
+            kernel_versions_file_path = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/mentor_kernel_versions.txt "
+            faux_directory = self.reportdir + pkglist_faux
+            set_linux_kernel_name_arg = "chmod +x " + script_directory + " && " + script_directory + faux_directory +" " + kernel_versions_file_path
+            set_linux_name = subprocess.Popen(
+                set_linux_kernel_name_arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            set_linux_name.wait()
+            output = set_linux_name.stdout.read()
+
             popen = subprocess.Popen(
                 args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result = popen.communicate()

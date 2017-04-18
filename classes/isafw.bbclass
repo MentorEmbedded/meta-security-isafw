@@ -226,7 +226,7 @@ def isafw_init(isafw, d):
         isafw_config.la_plugin_image_whitelist = re.split(r'[,\s]*', la_image_whitelist)
     if la_image_blacklist:
         isafw_config.la_plugin_image_blacklist = re.split(r'[,\s]*', la_image_blacklist)
-
+    isafw_config.tmp_dir = d.getVar('TMPDIR', True) 
     return isafw.ISA(isafw_config)
 
 # based on toaster.bbclass _toaster_load_pkgdatafile function

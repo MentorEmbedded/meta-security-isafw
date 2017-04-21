@@ -33,7 +33,6 @@ import re
 CVEChecker = None
 pkglist = "/cve_check_tool_pkglist"
 
-
 class ISA_CVEChecker:
     initialized = False
 
@@ -43,8 +42,8 @@ class ISA_CVEChecker:
         self.reportdir = ISA_config.reportdir
         self.timestamp = ISA_config.timestamp
         self.logfile = ISA_config.logdir + "/isafw_cvelog"
-        self.report_name = ISA_config.reportdir + "/cve_report_" + \
-            ISA_config.machine + "_" + ISA_config.timestamp
+        self.csv_report_name = ISA_config.reportdir + "/cve_report"
+        self.html_report_name = ISA_config.reportdir + "/cve_check"
         self.tmp_dir = ISA_config.tmp_dir
         output = ""
         # check that cve-check-tool is installed
@@ -102,12 +101,12 @@ class ISA_CVEChecker:
             return
         if (self.initialized):
             with open(self.logfile, 'a') as flog:
-                flog.write("Creating report in HTML format.\n")
-            result = self.process_report_type("html")
-
-            with open(self.logfile, 'a') as flog:
                 flog.write("Creating report in CSV format.\n")
             result = self.process_report_type("csv")
+
+            with open(self.logfile, 'a') as flog:
+                flog.write("Creating report in HTML format.\n")
+            result = self.process_report_type("html")
 
             pkglist_faux = pkglist + "_" + self.timestamp + ".faux"
             os.remove(self.reportdir + pkglist_faux)
@@ -133,7 +132,7 @@ class ISA_CVEChecker:
                         root, 'testcase', classname='ISA_CVEChecker', name="Error in cve-check-tool")
             etree.SubElement( tcase, 'failure', message=result, type='violation')
         else:
-            with open(self.report_name + ".csv", 'r') as f:
+            with open(self.csv_report_name, 'r') as f:
                 for line in f:
                     num_tests += 1
                     line = line.strip()
@@ -149,7 +148,7 @@ class ISA_CVEChecker:
 
         root.set('tests', str(num_tests))
         tree = etree.ElementTree(root)
-        output = self.report_name + '.xml'
+        output = self.csv_report_name + '.xml'
         try:
             tree.write(output, encoding='UTF-8',
                        pretty_print=True, xml_declaration=True)
@@ -160,12 +159,8 @@ class ISA_CVEChecker:
         # now faux file is ready and we can process it
         args = ""
         result = ""
-        output = ""
+        output= ""
         faux_directory = ""
-        set_linux_kernel_name_arg = ""
-        tool_stderr_value = ""
-        script_directory = ""
-        kernel_versions_file_path = ""
         tool_stderr_value = ""
         if self.proxy:
             args += "https_proxy=%s http_proxy=%s " % (self.proxy, self.proxy)
@@ -180,16 +175,8 @@ class ISA_CVEChecker:
         with open(self.logfile, 'a') as flog:
             flog.write("Args: " + args)
         try:
-            script_directory = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/set_linux_name.sh "
-            kernel_versions_file_path = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/mentor_kernel_versions.txt "
             faux_directory = self.reportdir + pkglist_faux
-            set_linux_kernel_name_arg = "chmod +x " + script_directory + " && " + script_directory + faux_directory +" " + kernel_versions_file_path
-            set_linux_name = subprocess.Popen(
-                set_linux_kernel_name_arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            set_linux_name.wait()
-            output = set_linux_name.stdout.read()
-            with open(self.logfile, 'a') as flog:
-                flog.write("Output mine: " + set_linux_kernel_name_arg)
+            output = self.mapping_of_kernel(faux_directory," "," ")
             popen = subprocess.Popen(
                 args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result = popen.communicate()
@@ -202,13 +189,44 @@ class ISA_CVEChecker:
             stdout_value = result[0]
             tool_stderr_value = result[1].decode('utf-8')
             if not tool_stderr_value and popen.returncode == 0:
-                report = self.report_name + "." + rtype
+                if rtype != "html":
+                    report = self.csv_report_name
+                else:
+                    report = self.html_report_name
                 with open(report, 'wb') as freport:
                     freport.write(stdout_value)
+
+		if rtype == "csv":
+                    self.mapping_of_kernel(report,"custom",output)
             else:
                 tool_stderr_value = tool_stderr_value + \
                 "\ncve-check-tool terminated with exit code " + str(popen.returncode)
         return tool_stderr_value
+
+    def mapping_of_kernel(self, file_and_dir, mapping_mode,custom_name):
+        output = ""
+        set_linux_kernel_name_arg = ""
+        script_directory = ""
+        kernel_versions_file_path = ""
+
+        script_directory = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/set_linux_name.sh "
+        kernel_versions_file_path = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/mentor_kernel_versions.txt "
+
+        if mapping_mode != "custom":
+            set_linux_kernel_name_arg = "chmod +x " + script_directory + " && " + script_directory + file_and_dir +" " + kernel_versions_file_path
+        else:
+            set_linux_kernel_name_arg="chmod +x "+script_directory +" && "+script_directory+file_and_dir+" "+kernel_versions_file_path+"Custom "+custom_name
+	
+        with open(self.logfile, 'a') as flog:
+            flog.write("\nMine: " + set_linux_kernel_name_arg)
+        set_linux_name = subprocess.Popen(
+            set_linux_kernel_name_arg, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        set_linux_name.wait()
+        output = set_linux_name.stdout.read()
+	
+	with open(self.logfile, 'a') as flog:
+            flog.write("\nKernel Name: " + output + "\n")	
+        return output
 
     def process_patch_list(self, patch_files):
         patch_info = ""

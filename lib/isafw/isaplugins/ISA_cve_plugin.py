@@ -180,6 +180,12 @@ class ISA_CVEChecker:
             popen = subprocess.Popen(
                 args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             result = popen.communicate()
+            if result[1].decode('utf-8'):
+                with open(self.logfile, 'a') as flog:
+                    flog.write("\nerror occured. Retrying ")
+                popen = subprocess.Popen(
+                    args, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                result = popen.communicate()
         except:
             tool_stderr_value = "Error in executing cve-check-tool" + str(sys.exc_info())
             with open(self.logfile, 'a') as flog:
@@ -196,11 +202,13 @@ class ISA_CVEChecker:
                 with open(report, 'wb') as freport:
                     freport.write(stdout_value)
 
-		if rtype == "csv":
+	        if rtype == "csv":
                     self.mapping_of_kernel(report,"custom",output)
             else:
                 tool_stderr_value = tool_stderr_value + \
                 "\ncve-check-tool terminated with exit code " + str(popen.returncode)
+                with open(self.logfile, 'a') as flog:
+                    flog.write("error: " + tool_stderr_value)
         return tool_stderr_value
 
     def mapping_of_kernel(self, file_and_dir, mapping_mode,custom_name):

@@ -217,8 +217,8 @@ class ISA_CVEChecker:
         script_directory = ""
         kernel_versions_file_path = ""
 
-        script_directory = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/set_linux_name.sh "
-        kernel_versions_file_path = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/5.6.4-r0/mentor_kernel_versions.txt "
+        script_directory = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/git-r0/set_linux_name.sh "
+        kernel_versions_file_path = self.tmp_dir + "/work/x86_64-linux/cve-check-tool-native/git-r0/mentor_kernel_versions.txt "
 
         if mapping_mode != "custom":
             set_linux_kernel_name_arg = "chmod +x " + script_directory + " && " + script_directory + file_and_dir +" " + kernel_versions_file_path

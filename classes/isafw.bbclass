@@ -12,7 +12,7 @@ LICENSE = "MIT"
 require conf/distro/include/distro_alias.inc
 
 ISAFW_WORKDIR = "${WORKDIR}/isafw"
-ISAFW_REPORTDIR ?= "${LOG_DIR}/isafw-report"
+ISAFW_REPORTDIR ?= "${TMPDIR}"
 ISAFW_LOGDIR ?= "${LOG_DIR}/isafw-logs"
 
 ISAFW_PLUGINS_WHITELIST ?= ""
@@ -94,6 +94,7 @@ python process_reports_handler() {
 
     savedenv = os.environ.copy()
     os.environ["PATH"] = e.data.getVar("PATH", True)
+    os.environ["PATH"] = e.data.getVar("STAGING_DIR_NATIVE" , True) + "/usr/bin:" + os.environ["PATH"]
 
     imageSecurityAnalyser = isafw_init(isafw, e.data)
 
@@ -198,7 +199,7 @@ def isafw_init(isafw, d):
 
     isafw_config.machine = d.getVar('MACHINE', True)
     isafw_config.timestamp = d.getVar('DATETIME', True)
-    isafw_config.reportdir = d.getVar('ISAFW_REPORTDIR', True) + "_" + isafw_config.timestamp
+    isafw_config.reportdir = d.getVar('ISAFW_REPORTDIR', True)
     if not os.path.exists(os.path.dirname(isafw_config.reportdir + "/test")):
         try:
             os.makedirs(os.path.dirname(isafw_config.reportdir + "/test"))
@@ -226,7 +227,8 @@ def isafw_init(isafw, d):
         isafw_config.la_plugin_image_whitelist = re.split(r'[,\s]*', la_image_whitelist)
     if la_image_blacklist:
         isafw_config.la_plugin_image_blacklist = re.split(r'[,\s]*', la_image_blacklist)
-
+    isafw_config.name = d.getVar('BPN', True) 
+    isafw_config.tmp_dir = d.getVar('TMPDIR', True)
     return isafw.ISA(isafw_config)
 
 # based on toaster.bbclass _toaster_load_pkgdatafile function

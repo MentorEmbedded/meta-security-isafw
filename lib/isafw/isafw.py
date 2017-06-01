@@ -116,6 +116,8 @@ class ISA_config:
     arch = ""                     # target architecture
     name = "" 
     tmp_dir = ""
+    html_report_name = ""
+    csv_report_name = ""
 
 class ISA:
     def call_plugins(self, methodname, *parameters, **keywords):
